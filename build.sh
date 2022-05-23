@@ -44,3 +44,4 @@ grub_install () {
 prepare_dest $1
 build_kernel
 rootfs_install $1
+grub_install
