@@ -23,7 +23,7 @@ prepare_dest () {
 }
 
 build_kernel () {
-    if [ $2 = "-skip-download" ]; 
+    if [[ $2 = "-skip-download" ]]; 
         then 
             echo "Not downloading kernel git"
         else
@@ -31,8 +31,8 @@ build_kernel () {
     fi
     cp linux/arch/arm64/configs/sdm845.config linux/.config
     cd linux
-    make menuconfig
-    make -j24
+    make defconfig sdm845.config 
+    make -j$(nproc)
     make dtbs
     make install INSTALL_PATH=/mnt/boot
     cp arch/arm64/boot/dts/qcom/$DTB .
@@ -48,6 +48,7 @@ rootfs_install () {
     mount --bind /sys /mnt/sys
     mkdir -p /mnt/lib/firmware/qcom/samsung/w737
     cp -r firmware/system/* /mnt/lib/firmware/qcom/samsung/w737
+    make INSTALL_MOD_PATH=/mnt modules_install
     chroot /mnt apt update
     chroot /mnt apt install 
 }
