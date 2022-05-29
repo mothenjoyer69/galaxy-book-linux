@@ -7,15 +7,57 @@ ROOT=$12
 export ARCH=arm64
 export CROSS_COMPILE=aarch64-linux-gnu-
 
+
+user_menu() {
+    echo -ne "
+Choose an option:
+1) Do everything
+2) Build kernel only
+3) Prepare drive only
+4) Exit
+Choose an option:  "
+    read -r input
+    case $input in
+    1)
+        prepare_dest $1
+        build_kernel
+        rootfs_install $1
+        grub_install
+        umount_all $1
+        exit 0
+        ;;
+    2)
+        prepare_dest $1
+        build_kernel $1
+        cd linux   
+        make INSTALL_MOD_PATH=/mnt modules_install
+        exit 0
+        ;;
+    3)
+        prepare_dest $1
+        umount_all $1
+        exit 0
+        ;;
+    4)
+        exit 0
+        ;;
+    *)
+        echo "Invalid selection"
+        user_menu
+        ;;
+    esac
+}
+
 prepare_dest () {
     lsblk #check partitions are correct and that you did in fact NOT just nuke your storage drive
     sleep 10
-    dd if=/dev/zero of=$1 bs=4m
-    parted $1 mklabel gpt && parted $1 mkpart fat32 1MiB 301MiB
-    parted $1 mkpart ext4 301MiB 100%
+    #dd if=/dev/zero of=$DESTDIR bs=4M
+    parted $DESTDIR mklabel gpt
+    parted $DESTDIR mkpart fat32 1MiB 301MiB
+    parted $DESTDIR set 1 boot on
+    parted $DESTDIR mkpart ext4 301MiB 100%
     mkfs.fat -F 32 $EFI
     mkfs.ext4 $ROOT
-    
     mount $ROOT /mnt
     mkdir /mnt/boot
     mount $EFI /mnt/boot
@@ -32,6 +74,7 @@ build_kernel () {
     cp linux/arch/arm64/configs/sdm845.config linux/.config
     cd linux
     make defconfig sdm845.config 
+    make menuconfig
     make -j$(nproc)
     make dtbs
     make install INSTALL_PATH=/mnt/boot
@@ -47,7 +90,8 @@ rootfs_install () {
     mount --bind /proc /mnt/proc &&
     mount --bind /sys /mnt/sys
     mkdir -p /mnt/lib/firmware/qcom/samsung/w737
-    cp -r firmware/system/* /mnt/lib/firmware/qcom/samsung/w737
+    cp -r firmware/system/* /mnt/lib/firmware/qcom/samsung/w737 #lmao firmware is probably signed so uh gotta figure out how to get this done easily for other devices
+    cd linux
     make INSTALL_MOD_PATH=/mnt modules_install
     chroot /mnt apt update
     chroot /mnt apt install 
@@ -71,8 +115,4 @@ umount_all () {
     
 }
 
-prepare_dest $1
-build_kernel
-rootfs_install $1
-grub_install
-umount_all $1
+user_menu
