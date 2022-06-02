@@ -14,7 +14,8 @@ Choose an option:
 1) Do everything
 2) Build kernel only
 3) Prepare drive only
-4) Exit
+4) Install to device
+5) Exit
 Choose an option:  "
     read -r input
     case $input in
@@ -39,7 +40,11 @@ Choose an option:  "
         exit 0
         ;;
     4)
-        exit 0
+        echo "Not implemented"
+        #todo: add this. first step, find out what the hell is causing the display to blank.
+        user_menu
+        ;;
+    5) exit 0
         ;;
     *)
         echo "Invalid selection"
