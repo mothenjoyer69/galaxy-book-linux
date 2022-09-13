@@ -38,7 +38,7 @@ fi
 case $CMD in
     -norootfs ) echo "not building rootfs" ;;
     -clean ) echo "cleaning directory" cd $BR2_DIR && make clean && cd .. && rm -rf $OUT_DIR && echo "cleaned" && exit;;
-    *) cd $BR2_DIR && make $CONFIG && make BR2_JLEVEL=$(nproc) && cd ..
+    *) cp extras/$CONFIG $BR2_DIR && cd $BR2_DIR && make $CONFIG && make BR2_JLEVEL=$(nproc) && cd ..
 esac
 #moving files
 echo "moving files"
