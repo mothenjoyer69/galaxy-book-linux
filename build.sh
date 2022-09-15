@@ -9,6 +9,7 @@ ROOTFS="rootfs.cpio"
 CMD=$1$2
 CONFIG=samsung-w737_defconfig
 #functions
+#partition USB and write kernel + rootfs + grub to USB
 flash_usb () {
     read -p "target device " USB
     echo "you entered $USB"
@@ -39,15 +40,15 @@ fi
 case $CMD in
     -norootfs ) echo "not building rootfs" ;;
     -clean ) echo "cleaning directory" && cd $KERN_DIR && make clean && cd .. && cd $BR2_DIR && make clean && cd .. && rm -rf $OUT_DIR && echo "cleaned" && exit;;
-    *) cd $BR2_DIR && make $CONFIG && make BR2_JLEVEL=$(nproc) 2>&1|tee build.log && cd ..
+    *) echo "building everythign" && cd $BR2_DIR && make $CONFIG && make BR2_JLEVEL=$(nproc) 2>&1|tee build.log && cd ..;;
 esac
-#moving files
+#moving built files to working directory
 echo "moving files"
 [[ ! -d $OUT_DIR ]] && mkdir $OUT_DIR/
 export OUTPUT_FILES=$BR2_DIR/output/images
 for i in $OUTPUT_FILES/Image $OUTPUT_FILES/efi-part/EFI $OUTPUT_FILES/rootfs.cpio $OUTPUT_FILES/sdm850-samsung-w737.dtb; do cp -r $i $OUT_DIR; done
 echo "$PWD/$OUT_DIR contains built files"
-#partition drive
+#USB install
 while true; do
     read -p "install to usb? " yn
     case $yn in
